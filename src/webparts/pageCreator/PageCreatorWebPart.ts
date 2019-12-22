@@ -8,7 +8,9 @@ import {
   PropertyPaneDropdown,
   IPropertyPaneDropdownOption,
   PropertyPaneToggle,
-  PropertyPaneChoiceGroup
+  PropertyPaneChoiceGroup,
+  IPropertyPaneField,
+  PropertyPaneCheckbox
 } from '@microsoft/sp-webpart-base';
 
 import * as strings from 'PageCreatorWebPartStrings';
@@ -32,6 +34,7 @@ export interface IPageCreatorWebPartProps {
 export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreatorWebPartProps> {
 
   private selectedSites: IPropertyPaneDropdownOption[];
+  private optionProps: IPropertyPaneField<any>[];
 
   public render(): void {
     const element: React.ReactElement<IPageCreatorProps> = React.createElement(
@@ -75,6 +78,24 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
       this.selectedSites = selectedSites;
       this.context.propertyPane.refresh();
     }); */
+    let optionProps: IPropertyPaneField<any>[] = [];
+    if (this.properties.selectedSites) {
+      this.properties.selectedSites.map((site) => {
+        let index = site.indexOf('###');
+        let siteUrl = site.substring(0, index);
+        let siteTitle = site.substring(index + 3);
+
+        optionProps.push(PropertyPaneCheckbox(siteUrl,
+          {
+            text: siteTitle,
+            checked: true,
+            disabled: true
+          })
+        );
+      });
+    }
+    this.optionProps = optionProps;
+    this.context.propertyPane.refresh();
   }
 
   protected onPropertyPaneFieldChanged(propertyPath: string, oldValue: any, newValue: any) {
@@ -102,6 +123,31 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
         });
       }
     }
+    if (propertyPath === 'selectedSites') {
+      super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
+      let optionProps: IPropertyPaneField<any>[] = [];
+      this.properties.selectedSites.map((site) => {
+        let index = site.indexOf('###');
+        let siteUrl = site.substring(0, index);
+        let siteTitle = site.substring(index + 3);
+
+        optionProps.push(PropertyPaneCheckbox('siteUrl',
+          {
+            text: siteTitle,
+            checked: true,
+            disabled: true
+          })
+        );
+      });
+      this.optionProps = optionProps;
+      this.context.propertyPane.refresh();
+    }
+    if (propertyPath === 'siteUrl') {
+      super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
+      console.log('newvalue: ', newValue);
+      console.log(`old value: ${oldValue}, new value: ${newValue}`);
+      this.context.propertyPane.refresh();
+    }
   }
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
@@ -121,10 +167,11 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
                 }),
                 PropertyFieldMultiSelect('selectedSites', {
                   key: 'selectedSites',
-                  label: '',//strings.SelectedSitesFieldLabel,
+                  label: '',
                   options: this.selectedSites,
                   selectedKeys: this.properties.selectedSites ? this.properties.selectedSites : []
                 }),
+                ...this.optionProps,
                 PropertyPaneToggle('showFollowedSites', {
                   label: strings.FollowedSitesFieldLabel,
                   onText: 'Yes',
