@@ -5,8 +5,10 @@ import {
   BaseClientSideWebPart,
   IPropertyPaneConfiguration,
   PropertyPaneTextField,
+  PropertyPaneDropdown,
   IPropertyPaneDropdownOption,
-  PropertyPaneToggle
+  PropertyPaneToggle,
+  PropertyPaneChoiceGroup
 } from '@microsoft/sp-webpart-base';
 
 import * as strings from 'PageCreatorWebPartStrings';
@@ -14,7 +16,7 @@ import PageCreator from './components/PageCreator';
 import { IPageCreatorProps } from './components/IPageCreatorProps';
 import { PropertyFieldMultiSelect } from '@pnp/spfx-property-controls/lib/PropertyFieldMultiSelect';
 import { SPService } from '../../service/SPService';
-import { PropertyPaneDropdown } from '@microsoft/sp-property-pane';
+//import { PropertyPaneDropdown } from '@microsoft/sp-property-pane';
 
 export interface IPageCreatorWebPartProps {
   selectedSites: string[];
@@ -24,6 +26,7 @@ export interface IPageCreatorWebPartProps {
   panelHeading: string;
   featuredSitesHeading: string;
   buttonAlignment: string;
+  searchSite: string;
 }
 
 export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreatorWebPartProps> {
@@ -68,10 +71,10 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
   }
 
   protected onPropertyPaneConfigurationStart() {
-    SPService.GETALLSITES(this.context.msGraphClientFactory).then((selectedSites) => {
+    /* SPService.GETALLSITES(this.context.msGraphClientFactory).then((selectedSites) => {
       this.selectedSites = selectedSites;
       this.context.propertyPane.refresh();
-    });
+    }); */
   }
 
   protected onPropertyPaneFieldChanged(propertyPath: string, oldValue: any, newValue: any) {
@@ -87,6 +90,18 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
       this.render();
       this.context.propertyPane.refresh();
     }
+    if (propertyPath === 'searchSite') {
+      super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
+      if (newValue === '') {
+        this.selectedSites = [];
+        this.context.propertyPane.refresh();
+      } else {
+        SPService.GETALLSITES(this.context.msGraphClientFactory, newValue).then((selectedSites) => {
+          this.selectedSites = selectedSites;
+          this.context.propertyPane.refresh();
+        });
+      }
+    }
   }
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
@@ -100,26 +115,13 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('buttonText', {
-                  label: strings.ButtonTextFieldLabel
-                }),
-                PropertyPaneDropdown('buttonAlignment', {
-                  label: strings.ButtonAlignmentFieldLabel,
-                  options: [
-                    { key: 'left', text: "Left" },
-                    /* {key: 'center', text: "Center"}, */
-                    { key: 'right', text: "Right" }
-                  ]
-                }),
-                PropertyPaneTextField('panelHeading', {
-                  label: strings.PanelHeadingFieldLabel
-                }),
-                PropertyPaneTextField('featuredSitesHeading', {
-                  label: strings.FeaturedSitesTextFieldLabel
+                PropertyPaneTextField('searchSite', {
+                  label: 'Search for site',
+                  placeholder: 'Search by Site Title or type * to get all sites'
                 }),
                 PropertyFieldMultiSelect('selectedSites', {
                   key: 'selectedSites',
-                  label: strings.SelectedSitesFieldLabel,
+                  label: '',//strings.SelectedSitesFieldLabel,
                   options: this.selectedSites,
                   selectedKeys: this.properties.selectedSites ? this.properties.selectedSites : []
                 }),
@@ -127,6 +129,27 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
                   label: strings.FollowedSitesFieldLabel,
                   onText: 'Yes',
                   offText: 'No'
+                })
+              ]
+            },
+            {
+              groupName: strings.TextPropertiesGroupName,
+              groupFields: [
+                PropertyPaneTextField('buttonText', {
+                  label: strings.ButtonTextFieldLabel
+                }),
+                PropertyPaneChoiceGroup('buttonAlignment', {
+                  label: strings.ButtonAlignmentFieldLabel,
+                  options: [
+                    { key: 'left', text: 'Left', iconProps: { officeFabricIconFontName: 'AlignLeft' } },
+                    { key: 'right', text: 'Right', iconProps: { officeFabricIconFontName: 'AlignRight' } }
+                  ]
+                }),
+                PropertyPaneTextField('panelHeading', {
+                  label: strings.PanelHeadingFieldLabel
+                }),
+                PropertyPaneTextField('featuredSitesHeading', {
+                  label: strings.FeaturedSitesTextFieldLabel
                 })
               ]
             }

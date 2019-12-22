@@ -51,7 +51,7 @@ export default class PageCreator extends React.Component<IPageCreatorProps, IPag
 				let siteUrl = site.substring(0, index);
 				let siteTitle = site.substring(index + 3);
 				let siteLogoUrl = await SPService.GETSITELOGO(this.props.context.spHttpClient, siteUrl);
-				siteProperties.push({ siteUrl: `${siteUrl}/_layouts/15/CreateSitePage.aspx?&promotedState=1`, siteTitle, siteLogoUrl });
+				siteProperties.push({ siteUrl, siteTitle, siteLogoUrl });
 			});
 		}
 		this.setState({ featuredSiteProperties: siteProperties });
@@ -65,7 +65,7 @@ export default class PageCreator extends React.Component<IPageCreatorProps, IPag
 				let siteUrl = site.key.toString().substring(0, index);
 				let siteTitle = site.key.toString().substring(index + 3);
 				let siteLogoUrl = await SPService.GETSITELOGO(this.props.context.spHttpClient, siteUrl);
-				followedSiteProperties.push({ siteUrl: `${siteUrl}/_layouts/15/CreateSitePage.aspx?&promotedState=1`, siteTitle, siteLogoUrl });
+				followedSiteProperties.push({ siteUrl, siteTitle, siteLogoUrl });
 			});
 		}
 		this.setState({ followedSiteProperties });
@@ -77,16 +77,17 @@ export default class PageCreator extends React.Component<IPageCreatorProps, IPag
    * @param siteUrl Site URL for which templates need to be retrieved
    */
 	private async getTemplates(siteUrl: string) {
-		let actualSiteUrl: string = siteUrl.substring(0, siteUrl.indexOf('/_layouts'));
+		let actualSiteUrl: string = siteUrl;//.substring(0, siteUrl.indexOf('/_layouts'));
+		let defaultImageUrl: string = `${actualSiteUrl}/_layouts/15/images/sitepagethumbnail.png`;
 		this.setState({ showTemplates: true, selectedSiteUrl: actualSiteUrl });
 		let templateOptions: IChoiceGroupOption[] = [];
 
-		templateOptions.push({ key: null, text: 'Blank', imageSrc: `${actualSiteUrl}/_layouts/15/images/sitepagethumbnail.png`, selectedImageSrc: `${actualSiteUrl}/_layouts/15/images/sitepagethumbnail.png`, imageSize: {width: 120, height: 80} });
+		templateOptions.push({ key: null, text: 'Blank', imageSrc: defaultImageUrl, selectedImageSrc: defaultImageUrl, imageSize: { width: 120, height: 80 } });
 
 		let siteTemplates = await SPService.GETPAGETEMPLATES(this.props.context.spHttpClient, actualSiteUrl);
 
 		siteTemplates.map((template) => {
-			templateOptions.push({ key: template.Id, text: template.Title, imageSrc: template.BannerImageUrl, selectedImageSrc: template.BannerImageUrl, imageSize: {width: 120, height: 80} });
+			templateOptions.push({ key: template.Id, text: template.Title, imageSrc: template.BannerImageUrl ? template.BannerImageUrl : defaultImageUrl, selectedImageSrc: template.BannerImageUrl ? template.BannerImageUrl : defaultImageUrl, imageSize: { width: 120, height: 80 } });
 		});
 		this.setState({ templateOptions });
 	}
@@ -112,9 +113,6 @@ export default class PageCreator extends React.Component<IPageCreatorProps, IPag
 									{site.siteTitle[0]}
 								</div>
 							}
-							{/* <a className={styles.siteAnchor} href={site.siteUrl} target='_blank' data-interception="off">
-                <span className={styles.siteAnchorTitle}>{site.siteTitle}</span>
-              </a> */}
 							<div className={styles.siteAnchor} onClick={() => this.getTemplates(site.siteUrl)}>
 								<span className={styles.siteAnchorTitle}>{site.siteTitle}</span>
 							</div>

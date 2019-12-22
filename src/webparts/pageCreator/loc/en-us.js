@@ -1,7 +1,8 @@
 define([], function() {
   return {
-    "PropertyPaneDescription": "Description",
-    "BasicGroupName": "Group Name",
+    "PropertyPaneDescription": "PageCreator Properties",
+    "BasicGroupName": "Site Properties",
+    "TextPropertiesGroupName": "Text properties",
     "DescriptionFieldLabel": "Description Field",
     "ButtonTextFieldLabel": "Create Page Button Text",
     "PanelHeadingFieldLabel": "Panel Heading Text",

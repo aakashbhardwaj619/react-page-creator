@@ -1,6 +1,7 @@
 declare interface IPageCreatorWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
+  TextPropertiesGroupName: string;
   DescriptionFieldLabel: string;
   ButtonTextFieldLabel: string;
   PanelHeadingFieldLabel: string;
