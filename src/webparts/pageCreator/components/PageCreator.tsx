@@ -218,7 +218,7 @@ export default class PageCreator extends React.Component<IPageCreatorProps, IPag
 												{ key: 'SitePage', text: 'Site Page' },
 												{ key: 'NewsPost', text: 'News Post' }
 											]}
-											onChange={(ev, val) => { this.setState({ pageType: val.key.toString() }) }}
+											onChange={(ev, val) => { this.setState({ pageType: val.key.toString() }); }}
 										/>
 										<br />
 										<ChoiceGroup options={this.state.templateOptions}

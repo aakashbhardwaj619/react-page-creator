@@ -5,20 +5,15 @@ import {
   BaseClientSideWebPart,
   IPropertyPaneConfiguration,
   PropertyPaneTextField,
-  PropertyPaneDropdown,
   IPropertyPaneDropdownOption,
   PropertyPaneToggle,
-  PropertyPaneChoiceGroup,
-  IPropertyPaneField,
-  PropertyPaneCheckbox
+  PropertyPaneChoiceGroup
 } from '@microsoft/sp-webpart-base';
-
+import { PropertyFieldMultiSelect } from '@pnp/spfx-property-controls/lib/PropertyFieldMultiSelect';
 import * as strings from 'PageCreatorWebPartStrings';
 import PageCreator from './components/PageCreator';
 import { IPageCreatorProps } from './components/IPageCreatorProps';
-import { PropertyFieldMultiSelect } from '@pnp/spfx-property-controls/lib/PropertyFieldMultiSelect';
 import { SPService } from '../../service/SPService';
-//import { PropertyPaneDropdown } from '@microsoft/sp-property-pane';
 
 export interface IPageCreatorWebPartProps {
   selectedSites: string[];
@@ -32,9 +27,7 @@ export interface IPageCreatorWebPartProps {
 }
 
 export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreatorWebPartProps> {
-
   private selectedSites: IPropertyPaneDropdownOption[];
-  private optionProps: IPropertyPaneField<any>[];
 
   public render(): void {
     const element: React.ReactElement<IPageCreatorProps> = React.createElement(
@@ -58,7 +51,7 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
 
     if (this.properties.showFollowedSites) {
       SPService.GETFOLLOWEDSITES(this.context.msGraphClientFactory).then((followedSites) => {
-        console.log('followed sites: ', followedSites);
+        console.log('Followed sites: ', followedSites);
         this.properties.followedSites = followedSites;
         this.render();
       });
@@ -74,28 +67,10 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
   }
 
   protected onPropertyPaneConfigurationStart() {
-    /* SPService.GETALLSITES(this.context.msGraphClientFactory).then((selectedSites) => {
+    SPService.GETAVAILABLESITES(this.context.msGraphClientFactory).then((selectedSites) => {
       this.selectedSites = selectedSites;
       this.context.propertyPane.refresh();
-    }); */
-    let optionProps: IPropertyPaneField<any>[] = [];
-    if (this.properties.selectedSites) {
-      this.properties.selectedSites.map((site) => {
-        let index = site.indexOf('###');
-        let siteUrl = site.substring(0, index);
-        let siteTitle = site.substring(index + 3);
-
-        optionProps.push(PropertyPaneCheckbox(siteUrl,
-          {
-            text: siteTitle,
-            checked: true,
-            disabled: true
-          })
-        );
-      });
-    }
-    this.optionProps = optionProps;
-    this.context.propertyPane.refresh();
+    });
   }
 
   protected onPropertyPaneFieldChanged(propertyPath: string, oldValue: any, newValue: any) {
@@ -113,40 +88,10 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
     }
     if (propertyPath === 'searchSite') {
       super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
-      if (newValue === '') {
-        this.selectedSites = [];
+      SPService.GETAVAILABLESITES(this.context.msGraphClientFactory, newValue).then((selectedSites) => {
+        this.selectedSites = selectedSites;
         this.context.propertyPane.refresh();
-      } else {
-        SPService.GETALLSITES(this.context.msGraphClientFactory, newValue).then((selectedSites) => {
-          this.selectedSites = selectedSites;
-          this.context.propertyPane.refresh();
-        });
-      }
-    }
-    if (propertyPath === 'selectedSites') {
-      super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
-      let optionProps: IPropertyPaneField<any>[] = [];
-      this.properties.selectedSites.map((site) => {
-        let index = site.indexOf('###');
-        let siteUrl = site.substring(0, index);
-        let siteTitle = site.substring(index + 3);
-
-        optionProps.push(PropertyPaneCheckbox('siteUrl',
-          {
-            text: siteTitle,
-            checked: true,
-            disabled: true
-          })
-        );
       });
-      this.optionProps = optionProps;
-      this.context.propertyPane.refresh();
-    }
-    if (propertyPath === 'siteUrl') {
-      super.onPropertyPaneFieldChanged(propertyPath, oldValue, newValue);
-      console.log('newvalue: ', newValue);
-      console.log(`old value: ${oldValue}, new value: ${newValue}`);
-      this.context.propertyPane.refresh();
     }
   }
 
@@ -163,7 +108,7 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
               groupFields: [
                 PropertyPaneTextField('searchSite', {
                   label: 'Search for site',
-                  placeholder: 'Search by Site Title or type * to get all sites'
+                  placeholder: 'Search by Site Title'
                 }),
                 PropertyFieldMultiSelect('selectedSites', {
                   key: 'selectedSites',
@@ -171,7 +116,6 @@ export default class PageCreatorWebPart extends BaseClientSideWebPart<IPageCreat
                   options: this.selectedSites,
                   selectedKeys: this.properties.selectedSites ? this.properties.selectedSites : []
                 }),
-                ...this.optionProps,
                 PropertyPaneToggle('showFollowedSites', {
                   label: strings.FollowedSitesFieldLabel,
                   onText: 'Yes',

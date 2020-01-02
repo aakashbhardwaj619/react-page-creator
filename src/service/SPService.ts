@@ -114,11 +114,11 @@ export class SPService {
 	 *
 	 * @param msGraphClientFactory MSGraphClientFactory object for the current context
 	 */
-	public static async GETALLSITES(msGraphClientFactory: MSGraphClientFactory, searchText: string): Promise<IPropertyPaneDropdownOption[]> {
+	public static async GETAVAILABLESITES(msGraphClientFactory: MSGraphClientFactory, searchText: string = ''): Promise<IPropertyPaneDropdownOption[]> {
 		let selectedSites: IPropertyPaneDropdownOption[] = [];
 		
 		let searchQuery: string;
-		searchQuery = searchText === '*' ?  `*` : `{${searchText}}`;
+		searchQuery = searchText === '' ?  `*` : `{${searchText}}`;
 		
 		let _msGraphClient: MSGraphClient = await msGraphClientFactory.getClient();
 		let response = await _msGraphClient.api(`/sites?search=${searchQuery}&$select=displayName,webUrl`).get();
